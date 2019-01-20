@@ -29,7 +29,9 @@ namespace VkApp
             InitializeComponent();
 
             _links = new GroupLinks();
-
+            Users user = new Users();
+            var res = user.GetUsersDictionary;
+            var res2 = user.GetUsersDictionary;
             cbGames.ItemsSource = _links.GetUsefullGames();
             cbGames.Text = cbGames.Items[0].ToString();
         }

@@ -31,15 +31,13 @@ namespace VkApp.VKWorker
 
         public void TestWork(string message, string xpathForFile = null)
         {
-            string username = "375445128525";
-            string password = "хорошенькая19";
             List<string> links = new List<string>();
             List<string> savedNames = new List<string>();
             _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
             _driver.Navigate().GoToUrl("https://vk.com/login?to=aW0%2FYWN0PQ--&u=2");
 
-            _driver.FindElementByXPath("//*[@id=\"email\"]").SendKeys(username);
-            _driver.FindElementByXPath("//*[@id=\"pass\"]").SendKeys(password);
+            _driver.FindElementByXPath("//*[@id=\"email\"]").SendKeys(_usersDict["login"]);
+            _driver.FindElementByXPath("//*[@id=\"pass\"]").SendKeys(_usersDict["password"]);
             _driver.FindElementByXPath("//*[@id=\"login_button\"]").Click();
 
 
