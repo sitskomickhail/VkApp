@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:VkApp"
         mc:Ignorable="d"
-        Title="MainWindow" Height="250" Width="400" Background="#FF345EB8">
+        Icon="Icons\vkLogo.png"
+        Title="VK-Рассылка" Height="250" Width="400" Background="#FF345EB8">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="1*"/>
@@ -23,12 +24,12 @@
         <DockPanel Grid.Row="1">
             <Button HorizontalAlignment="Right" Content="Прикрепить файл" Margin="5, 1, 1, 1" Background="White"/>
             <Border BorderThickness="2" BorderBrush="LightBlue" Margin="5, 1, 5, 1">
-                <TextBlock Width="Auto" Text="Файл не выбран" Background="White"/>
+                <TextBlock Width="Auto" Text="Файл не выбран" Background="White" x:Name="pinPath"/>
             </Border>
         </DockPanel>
         <StackPanel Grid.Row="2" Margin="5, 1, 5, 1">
-            <RadioButton Content="Запустить бота на добавление друзей" IsChecked="True" FontWeight="Bold"/>
-            <RadioButton Content="Проверить наличие друзей и выполнить рассылку" FontWeight="Bold"/>
+            <RadioButton Content="Запустить бота на добавление друзей" IsChecked="True" FontWeight="Bold" x:Name="rbtnAdd"/>
+            <RadioButton Content="Проверить наличие друзей и выполнить рассылку" FontWeight="Bold" x:Name="rbtnSend"/>
         </StackPanel>
         <DockPanel Grid.Row="3">
             <Grid>
@@ -46,10 +47,12 @@
                     Padding="0, 0, 1, 0"
                     MinWidth="15"
                     Foreground="#FF345EB8"
-                    FontWeight="Bold"/>
+                    FontWeight="Bold"
+                    x:Name="btnAddFile"
+                    Click="btnAddFile_Click"/>
                 </StackPanel>
-                    <Button MinWidth="100" Margin="0, 15, 5, 15" Content="Start"
-                    Click="Button_Click" Grid.Column="1" MaxWidth="50" HorizontalAlignment="Right"/>
+                    <Button MinWidth="100" Margin="0, 15, 5, 15" Content="Start" x:Name="btnStart"
+                    Click="btnStart_Click" Grid.Column="1" MaxWidth="50" HorizontalAlignment="Right"/>
                 
             </Grid>
         </DockPanel>

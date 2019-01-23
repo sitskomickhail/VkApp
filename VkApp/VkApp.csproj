@@ -60,12 +60,14 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="FileManager\AddedNameFriends.cs" />
+    <Compile Include="FileManager\FriendsClass.cs" />
     <Compile Include="FileManager\GroupLinks.cs" />
+    <Compile Include="FileManager\ProxyUsing.cs" />
     <Compile Include="FileManager\Users.cs" />
     <Compile Include="Models\DriverWaitExtensions.cs" />
     <Compile Include="Models\RecaptchaSolve.cs" />
     <Compile Include="Randomer.cs" />
+    <Compile Include="VKWorker\ThreadWorker.cs" />
     <Compile Include="VKWorker\VK_Navigate.cs" />
     <Page Include="VkWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -107,6 +109,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\vkLogo.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

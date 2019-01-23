@@ -7,14 +7,14 @@ namespace VkApp.FileManager
 {
     class GroupLinks
     {
-        private List<string> _links;        
+        private List<string> _links;
         private const string _gamesPath = "SavedGames.txt";
 
         public GroupLinks()
         {
             _links = new List<string>();
         }
-        
+
         public List<string> GetUsefullGames()
         {
             List<string> games = new List<string>();
@@ -26,11 +26,17 @@ namespace VkApp.FileManager
                     games.Add(returnedGamesValue[i]);
                 }
             }
+            else
+                return null;
             return games;
         }
 
-        public List<string> GetLinks(string filePath)
+        public List<string> GetLinks(string fileName)
         {
+            if (fileName.IndexOf(' ') != 0)
+                fileName = fileName.Replace(" ", "");
+
+            string filePath = fileName + ".txt";
             if (File.Exists(filePath))
             {
                 string[] fileInfo = File.ReadAllLines(filePath);
@@ -42,17 +48,43 @@ namespace VkApp.FileManager
             return _links;
         }
 
-        public bool CreateLinksFile(string filePath)
+        public string CreateLinksFile(string filePath)
         {
-            using (FileStream file = new FileStream(Environment.CurrentDirectory, FileMode.OpenOrCreate))
+            string[] fileManage = filePath.Split('\\');
+            using (FileStream file = new FileStream($"{fileManage[fileManage.Count() - 1]}", FileMode.OpenOrCreate, FileAccess.Write))
             {
                 if (File.Exists(filePath))
                 {
-                    string[] links = File.ReadAllLines(filePath);
+                    string[] linkssss = File.ReadAllLines(filePath);
+                    List<string> links = new List<string>();
 
+                    for (int i = 0; i < linkssss.Count(); i++)
+                        if (!String.IsNullOrEmpty(linkssss[i]))
+                            links.Add(linkssss[i]);
+
+                    using (StreamWriter writer = new StreamWriter(file))
+                    {
+                        links.ForEach(str => writer.WriteLine(str));
+                    }
+                    file.Close();
+                    return AddToGames(fileManage[fileManage.Count() - 1].Remove(fileManage[fileManage.Count() - 1].IndexOf('.')));
                 }
             }
-            return false;
+            return null;
+        }
+
+        private string AddToGames(string game)
+        {
+            File.ReadAllLines(_gamesPath);
+
+            //using (FileStream file = new FileStream(_gamesPath, FileMode.OpenOrCreate, FileAccess.ReadWrite))
+            //{
+            using (StreamWriter writer = File.AppendText(_gamesPath))
+            {
+                writer.WriteLine(game);
+            }
+            //}
+            return game;
         }
     }
 }
