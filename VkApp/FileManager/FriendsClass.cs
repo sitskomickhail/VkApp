@@ -63,13 +63,16 @@ namespace VkApp.FileManager
         internal bool IsFriendExist(string text)
         {
             string friend = text;
-            friend.Replace('\n', new char());
-            friend.Replace('\r', ' ');
+            friend = friend.Replace('\n', new char());
+            friend = friend.Replace('\r', ' ');
 
-            string[] allFriends = File.ReadAllLines(_filePath);
-            for (int i = 0; i < allFriends.Count(); i++)
-                if (allFriends[i] == friend)
-                    return true;            
+            if (File.Exists(_filePath))
+            {
+                string[] allFriends = File.ReadAllLines(_filePath);
+                for (int i = 0; i < allFriends.Count(); i++)
+                    if (allFriends[i] == friend)
+                        return true;
+            }            
             return false;
         }
     }

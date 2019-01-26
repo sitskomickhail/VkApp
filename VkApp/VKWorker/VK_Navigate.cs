@@ -5,6 +5,8 @@ using OpenQA.Selenium.Chrome;
 using System.Threading;
 using VkApp.Models;
 using VkApp.FileManager;
+using OpenQA.Selenium.Html5;
+using OpenQA.Selenium.Remote;
 
 namespace VkApp.VKWorker
 {
@@ -29,10 +31,23 @@ namespace VkApp.VKWorker
         {
             _options = new ChromeOptions();
             //_options.AddArgument("-headless");
-            _options.AddArgument("--incognito");
+            //_options.AddArgument("--incognito");
             _options.AddArgument("--safebrowsing-disable-download-protection");
-            //_options.AddArguments("--proxy-server=http://user:password@yourProxyServer.com:8080");
-            _options.Proxy = new Proxy(proxy);
+            _options.AddExtension("ProxyAutoAuth.crx");
+            _options.ToCapabilities();
+
+            Proxy prox = new Proxy();
+            prox.IsAutoDetect = false;
+            prox.Kind = ProxyKind.Manual;
+            prox.HttpProxy = prox.SslProxy = $"{proxy["ip"]}:{proxy["port"]}";
+            //prox.SocksProxy = "13806";
+            prox.SocksUserName = proxy["login"].ToString();
+            prox.SocksPassword = proxy["password"].ToString();
+            _options.Proxy = prox;
+            //_options.AddArgument($"--proxy={proxy["ip"]}:{proxy["port"]}");
+            //_options.AddArgument($"--proxy-auth={proxy["login"]}:{proxy["password"]}");
+            //_options.AddArguments($"--proxy-server=http://{proxy["login"]}:{proxy["password"]}@{proxy["ip"]}:13806");
+            //_options.Proxy = new Proxy(proxy);
         }
 
 
@@ -41,8 +56,13 @@ namespace VkApp.VKWorker
             List<string> links = _links.GetLinks(choosedGame);
             int choosedLink = 0;
 
+
+            ChromeDriverService service = ChromeDriverService.CreateDefaultService(Environment.CurrentDirectory);
+
+            Dictionary<string, object> proxyDict = _proxy.Proxy;
+
             List<IWebElement> elems = new List<IWebElement>(); int curentPosition = 0;
-            ReOption(_proxy.Proxy);
+            ReOption(proxyDict);
 
             List<string> savedNames = new List<string>();
             int i = 1;
@@ -50,19 +70,18 @@ namespace VkApp.VKWorker
             {
                 string[] logPass = user.Split(':');
 
-                if ((_userClass.GetUsers.Count / _proxy.Count) == i && _userClass.GetUsers.Count > _proxy.Count)
-                {
-                    ReOption(_proxy.Proxy);
-                    i = 1;
-                }
-                else if (_userClass.GetUsers.Count <= _proxy.Count)
-                    ReOption(_proxy.Proxy);
 
-                _driver = new ChromeDriver(_options);
+                _driver = new ChromeDriver(service, _options);
 
                 _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
-                _driver.Navigate().GoToUrl("https://vk.com/login?to=aW0%2FYWN0PQ--&u=2");
 
+                _driver.FindElementById("login").SendKeys(proxyDict["login"].ToString());
+                _driver.FindElementById("password").SendKeys(proxyDict["password"].ToString());
+                _driver.FindElementById("save").Click();
+                Thread.Sleep(100);
+
+
+                _driver.Navigate().GoToUrl("https://vk.com/login?to=aW0%2FYWN0PQ--&u=2");
                 #region LOGIN
                 _driver.FindElementByXPath("//*[@id=\"email\"]").SendKeys(logPass[0]);
                 _driver.FindElementByXPath("//*[@id=\"pass\"]").SendKeys(logPass[1]);
@@ -73,27 +92,27 @@ namespace VkApp.VKWorker
                 #region GROUP_NAVIGATE
                 if (elems.Count == 0)
                 {
-                    _driver.Navigate().GoToUrl(links[choosedLink]);
+                    _driver.Navigate().GoToUrl(links[choosedLink++]);
                     _driver.FindElementByXPath("//*[@id=\"group_followers\"]/a/div/span[1]").Click();
-                    choosedLink++;
+
+                    foreach (IWebElement item in _driver.FindElements(By.ClassName("fans_fan_lnk")))
+                    {
+                        elems.Add(item);
+                        if (elems.Count >= 250)
+                            break;
+                    }
                 }
 
 
-                foreach (IWebElement item in _driver.FindElements(By.ClassName("fans_fan_lnk")))
-                {
-                    elems.Add(item);
-                    if (elems.Count >= 250)
-                        break;
-                }
-
+                List<string> friendLinks = new List<string>();
                 for (int pos = curentPosition; pos < elems.Count; pos++)
                 {
                     if (!_friendList.IsFriendExist(elems[pos].Text))
                     {
-                        links.Add(elems[pos].GetAttribute("href"));
+                        friendLinks.Add(elems[pos].GetAttribute("href"));
                         string friend = elems[pos].Text;
-                        friend.Replace('\n', new char());
-                        friend.Replace('\r', ' ');
+                        friend = friend.Replace('\n', new char());
+                        friend = friend.Replace('\r', ' ');
                         savedNames.Add(friend);
                         if (savedNames.Count == 25)
                             break;
@@ -103,12 +122,15 @@ namespace VkApp.VKWorker
 
                 if (curentPosition >= 250)
                 {
-                    elems.RemoveRange(0, elems.Count);
+                    elems.Clear();
                     curentPosition = 0;
                 }
 
-                _friendList.AddFriendsToFile(logPass[0], choosedGame ,savedNames);
-                savedNames.RemoveRange(0, savedNames.Count);
+                AddFriends(friendLinks);
+
+
+                _friendList.AddFriendsToFile(logPass[0], choosedGame, savedNames);
+                savedNames.Clear();
                 #endregion
 
                 //links.Add(_driver.FindElementByXPath("//*[@id=\"fans_fan_row158117675\"]/div[2]/a").GetAttribute("href"));
@@ -116,10 +138,15 @@ namespace VkApp.VKWorker
 
                 //links.Add(_driver.FindElementByXPath("//*[@id=\"fans_fan_row512032023\"]/div[2]/a").GetAttribute("href"));
                 //savedNames.Add(_driver.FindElementByXPath("//*[@id=\"fans_fan_row512032023\"]/div[2]/a").Text);
-
-                AddFriends(links);
-
                 _driver.Close();
+
+                if ((_userClass.GetUsers.Count / _proxy.Count) == i && _userClass.GetUsers.Count > _proxy.Count)
+                {
+                    ReOption(_proxy.Proxy);
+                    i = 1;
+                }
+                else if (_userClass.GetUsers.Count <= _proxy.Count)
+                    ReOption(_proxy.Proxy);
                 i++;
             }
         }
