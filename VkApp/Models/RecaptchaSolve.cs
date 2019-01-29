@@ -1,5 +1,4 @@
 ﻿using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Interactions;
 using System;
 using System.Collections.Generic;
@@ -18,9 +17,8 @@ namespace VkApp.Models
 
             Actions builder = new Actions(driver);
 
-            //driver.SwitchTo().Frame(DriverWaitExtensions.FindElement(driver, By.XPath("//*[@id=\"recaptcha-element-container\"]/div/div/iframe"), 3));
+            //driver.SwitchTo().Frame(DriverWaitExtensions.FindElement(driver, By.XPath("//*[@id=\"friend_status\"]/div[1]/button"), 3));
             //DriverWaitExtensions.FindElement(driver, By.ClassName("recaptcha-checkbox-checkmark"), 7).Click();
-
             #region AUDIO_BUTTON__CLICK
             IWebElement btn;
             driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(0);
@@ -28,7 +26,8 @@ namespace VkApp.Models
             try
             {
                 driver.SwitchTo().DefaultContent();
-                driver.SwitchTo().Frame(driver.FindElements(By.TagName("iframe"))[framePos]);
+                //driver.SwitchTo().Frame(driver.FindElements(By.XPath("iframe"))[framePos]);
+                driver.SwitchTo().Frame(driver.FindElement(By.XPath("/html/body/div[13]/div[2]/iframe")));
                 btn = driver.FindElement(By.XPath("//*[@id=\"recaptcha-audio-button\"]"));
                 Thread.Sleep(3000);
                 btn.Click();
@@ -65,7 +64,7 @@ namespace VkApp.Models
                     try
                     {
                         driver.SwitchTo().DefaultContent();
-                        driver.SwitchTo().Frame(driver.FindElement(By.XPath("//*[@id=\"recaptcha-element-container\"]/div/div/iframe")));
+                        driver.SwitchTo().Frame(driver.FindElement(By.XPath("//*[@id=\"recaptcha0\"]/div/div/iframe")));
                         IWebElement captchaClick = driver.FindElement(By.ClassName("recaptcha-checkbox-checkmark"));
                         captchaClick.Click();
                         break;
@@ -106,8 +105,11 @@ namespace VkApp.Models
             }
             driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(15);
             List<string> tabs = new List<string>(driver.WindowHandles);
-            driver.SwitchTo().Window(tabs[1]);
-
+            driver.SwitchTo().Window(tabs[2]);
+            //foreach (string item in tabs)
+            //{
+            //    MessageBox.Show(item);
+            //}
             #region DOWNLOAD/GET_CODE
             DownloadRequest(driver.Url);
             GetCode(driver);
@@ -138,7 +140,7 @@ namespace VkApp.Models
             driver.SwitchTo().DefaultContent();
             #endregion
         }
-        
+
         private static void DownloadRequest(string url)
         {
             HttpWebRequest httpRequest = (HttpWebRequest)WebRequest.Create(url);
@@ -166,7 +168,7 @@ namespace VkApp.Models
                 try
                 {
                     driver.SwitchTo().DefaultContent();
-                    driver.SwitchTo().Frame(driver.FindElement(By.XPath("//*[@id=\"recaptcha-element-container\"]/div/div/iframe")));
+                    driver.SwitchTo().Frame(driver.FindElement(By.XPath("//*[@id=\"recaptcha0\"]/div/div/iframe")));
                     driver.FindElement(By.ClassName("recaptcha-checkbox-checkmark")).Click();
 
                     break;
@@ -204,7 +206,7 @@ namespace VkApp.Models
             #endregion
 
             List<string> tabs = new List<string>(driver.WindowHandles);
-            driver.SwitchTo().Window(tabs[2]);
+            driver.SwitchTo().Window(tabs[3]);
 
             #region DOWNLOAD/GET_CODE
             DownloadRequest(driver.Url);
@@ -243,7 +245,7 @@ namespace VkApp.Models
             while (driver.Url == "https://realspeaker.net/media")
                 topElem.Click();
 
-            DriverWaitExtensions.FindElement(driver, By.XPath("//*[@id=\"app\"]/main/div/div[1]/div/div/span/div/nav/div/button/div"), 5).Click();
+            DriverWaitExtensions.FindElement(driver, By.XPath("//*[@id=\"app\"]/main/div/div[1]/div/div/span/div/nav/div/button/div"), 8).Click();
         }
     }
 }

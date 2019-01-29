@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -35,7 +34,7 @@ namespace VkApp.FileManager
             else
                 return null;
         }
-        
+
         public void AddFriendsToFile(string userLogin, string gameName, List<string> friendRequests)
         {
             string path = _fileBot + userLogin + "\\" + gameName + ".txt";
@@ -57,9 +56,9 @@ namespace VkApp.FileManager
                 }
             }
         }
-        
+
         public List<string> GetFriends { get { return _friendList; } }
-        
+
         internal bool IsFriendExist(string text)
         {
             string friend = text;
@@ -72,7 +71,7 @@ namespace VkApp.FileManager
                 for (int i = 0; i < allFriends.Count(); i++)
                     if (allFriends[i] == friend)
                         return true;
-            }            
+            }
             return false;
         }
     }

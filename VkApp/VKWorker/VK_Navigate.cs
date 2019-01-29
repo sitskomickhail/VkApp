@@ -5,8 +5,6 @@ using OpenQA.Selenium.Chrome;
 using System.Threading;
 using VkApp.Models;
 using VkApp.FileManager;
-using OpenQA.Selenium.Html5;
-using OpenQA.Selenium.Remote;
 
 namespace VkApp.VKWorker
 {
@@ -40,14 +38,9 @@ namespace VkApp.VKWorker
             prox.IsAutoDetect = false;
             prox.Kind = ProxyKind.Manual;
             prox.HttpProxy = prox.SslProxy = $"{proxy["ip"]}:{proxy["port"]}";
-            //prox.SocksProxy = "13806";
             prox.SocksUserName = proxy["login"].ToString();
             prox.SocksPassword = proxy["password"].ToString();
             _options.Proxy = prox;
-            //_options.AddArgument($"--proxy={proxy["ip"]}:{proxy["port"]}");
-            //_options.AddArgument($"--proxy-auth={proxy["login"]}:{proxy["password"]}");
-            //_options.AddArguments($"--proxy-server=http://{proxy["login"]}:{proxy["password"]}@{proxy["ip"]}:13806");
-            //_options.Proxy = new Proxy(proxy);
         }
 
 
@@ -56,8 +49,8 @@ namespace VkApp.VKWorker
             List<string> links = _links.GetLinks(choosedGame);
             int choosedLink = 0;
 
-
             ChromeDriverService service = ChromeDriverService.CreateDefaultService(Environment.CurrentDirectory);
+            service.HideCommandPromptWindow = true;
 
             Dictionary<string, object> proxyDict = _proxy.Proxy;
 
@@ -72,7 +65,7 @@ namespace VkApp.VKWorker
 
 
                 _driver = new ChromeDriver(service, _options);
-
+                _driver.Manage().Window.Maximize();
                 _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
 
                 _driver.FindElementById("login").SendKeys(proxyDict["login"].ToString());
@@ -88,7 +81,7 @@ namespace VkApp.VKWorker
                 _driver.FindElementByXPath("//*[@id=\"login_button\"]").Click();
                 IsRecaptchaExist();
                 #endregion
-                //CHECKED REQUIRED :)
+
                 #region GROUP_NAVIGATE
                 if (elems.Count == 0)
                 {
@@ -133,11 +126,6 @@ namespace VkApp.VKWorker
                 savedNames.Clear();
                 #endregion
 
-                //links.Add(_driver.FindElementByXPath("//*[@id=\"fans_fan_row158117675\"]/div[2]/a").GetAttribute("href"));
-                //savedNames.Add(_driver.FindElementByXPath("//*[@id=\"fans_fan_row158117675\"]/div[2]/a").Text);
-
-                //links.Add(_driver.FindElementByXPath("//*[@id=\"fans_fan_row512032023\"]/div[2]/a").GetAttribute("href"));
-                //savedNames.Add(_driver.FindElementByXPath("//*[@id=\"fans_fan_row512032023\"]/div[2]/a").Text);
                 _driver.Close();
 
                 if ((_userClass.GetUsers.Count / _proxy.Count) == i && _userClass.GetUsers.Count > _proxy.Count)
@@ -210,9 +198,13 @@ namespace VkApp.VKWorker
             foreach (string addUser in userList)
             {
                 _driver.Navigate().GoToUrl(addUser);
-                _driver.FindElementByXPath("//*[@id=\"friend_status\"]/div[1]/button").Click();
-                IsRecaptchaExist();
-                Thread.Sleep(1000);
+                try
+                {
+                    _driver.FindElementByXPath("//*[@id=\"friend_status\"]/div[1]/button").Click();
+                    IsRecaptchaExist();
+                    Thread.Sleep(1000);
+                }
+                catch { }
             }
         }
 
@@ -222,7 +214,8 @@ namespace VkApp.VKWorker
             try
             {
                 _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
-                _driver.SwitchTo().Frame(_driver.FindElement(By.XPath("//*[@id=\"recaptcha-element-container\"]/div/div/iframe")));
+
+                _driver.SwitchTo().Frame(_driver.FindElement(By.XPath("//*[@id=\"recaptcha0\"]/div/div/iframe")));
                 _driver.FindElement(By.ClassName("recaptcha-checkbox-checkmark")).Click();
 
                 RecaptchaSolve.SolveCaptcha(_driver);
