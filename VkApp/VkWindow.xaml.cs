@@ -25,10 +25,11 @@ namespace VkApp
         {
             if (rbtnAdd.IsChecked == true)
                 _worker.StartDriver_Work(cbGames.Text);
-            else if (pinPath.Text == "Файл не выбран")
-                _worker.StartDriver_Send(tbMessage.Text, cbGames.Text);
-            else
-                _worker.StartDriver_Send(tbMessage.Text, cbGames.Text, pinPath.Text);
+            //else if (pinPath.Text == "Файл не выбран")
+            //    _worker.StartDriver_Send(tbMessage.Text, cbGames.Text);
+            //else
+            //    _worker.StartDriver_Send(tbMessage.Text, cbGames.Text, pinPath.Text);
+
         }
 
         private void btnAddFile_Click(object sender, RoutedEventArgs e)
@@ -40,6 +41,20 @@ namespace VkApp
                 _links.CreateLinksFile(file.FileName);
                 cbGames.ItemsSource = _links.GetUsefullGames();
             }
+        }
+
+        private void btnDragNDrop_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog file = new OpenFileDialog();            
+            if (file.ShowDialog().Value)
+            {
+                pinPath.Text = file.FileName;            
+            }
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            _worker.CloseThreads();
         }
     }
 }

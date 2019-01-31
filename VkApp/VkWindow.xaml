@@ -6,7 +6,9 @@
         xmlns:local="clr-namespace:VkApp"
         mc:Ignorable="d"
         Icon="Icons\vkLogo.png"
-        Title="VK-Рассылка" Height="250" Width="400" Background="#FF345EB8">
+        Title="VK-Рассылка" Height="250" Width="400" Background="#FF345EB8"
+        WindowStartupLocation="CenterScreen"
+        Closing="Window_Closing">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="1*"/>
@@ -22,7 +24,8 @@
                      x:Name="tbMessage"/>
         </Border>
         <DockPanel Grid.Row="1">
-            <Button HorizontalAlignment="Right" Content="Прикрепить файл" Margin="5, 1, 1, 1" Background="White"/>
+            <Button HorizontalAlignment="Right" Content="Прикрепить файл" Margin="5, 1, 1, 1" Background="White" x:Name="btnDragNDrop"
+                    Click="btnDragNDrop_Click"/>
             <Border BorderThickness="2" BorderBrush="LightBlue" Margin="5, 1, 5, 1">
                 <TextBlock Width="Auto" Text="Файл не выбран" Background="White" x:Name="pinPath"/>
             </Border>

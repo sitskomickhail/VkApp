@@ -7,13 +7,9 @@ namespace VkApp.FileManager
 {
     class GroupLinks
     {
-        private List<string> _links;
         private const string _gamesPath = "SavedGames.txt";
 
-        public GroupLinks()
-        {
-            _links = new List<string>();
-        }
+        public GroupLinks() { }
 
         public List<string> GetUsefullGames()
         {
@@ -33,6 +29,8 @@ namespace VkApp.FileManager
 
         public List<string> GetLinks(string fileName)
         {
+            List<string> links = new List<string>();
+
             if (fileName.IndexOf(' ') != 0)
                 fileName = fileName.Replace(" ", "");
 
@@ -42,10 +40,10 @@ namespace VkApp.FileManager
                 string[] fileInfo = File.ReadAllLines(filePath);
                 for (int i = 0; i < fileInfo.Count(); i++)
                 {
-                    _links.Add(fileInfo[i]);
+                    links.Add(fileInfo[i]);
                 }
             }
-            return _links;
+            return links;
         }
 
         public string CreateLinksFile(string filePath)

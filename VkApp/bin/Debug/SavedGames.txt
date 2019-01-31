@@ -1,4 +1,2 @@
 ﻿Metro 2033
 League
-TestGame1
-TestGame2Proxy

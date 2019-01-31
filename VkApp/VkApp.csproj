@@ -66,9 +66,9 @@
     <Compile Include="FileManager\Users.cs" />
     <Compile Include="Models\DriverWaitExtensions.cs" />
     <Compile Include="Models\RecaptchaSolve.cs" />
+    <Compile Include="VKWorker\VkNavigate.cs" />
     <Compile Include="Randomer.cs" />
     <Compile Include="VKWorker\ThreadWorker.cs" />
-    <Compile Include="VKWorker\VK_Navigate.cs" />
     <Page Include="VkWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

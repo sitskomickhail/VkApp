@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -8,17 +9,23 @@ namespace VkApp.FileManager
     public class FriendsClass
     {
         private const string _filePath = "Friends.txt";
-        private const string _fileBot = "BotFriendsFolder\\";
+        private string _hiddenFolder;
         private List<string> _friendList;
 
         public FriendsClass()
         {
+            _hiddenFolder = Environment.CurrentDirectory + @"\BotFriendsFolder\";
             _friendList = new List<string>();
+            if (!Directory.Exists(_hiddenFolder))
+            {
+                DirectoryInfo di = Directory.CreateDirectory(_hiddenFolder);
+                di.Attributes = FileAttributes.Directory | FileAttributes.Hidden;
+            }
         }
 
         public List<string> GetAllFriendsFromFile(string userLogin, string gameName)
         {
-            string path = _fileBot + userLogin + "\\" + gameName + ".txt";
+            string path = _hiddenFolder + userLogin + @"\" + gameName + ".txt";
             if (File.Exists(path))
             {
                 string[] result = File.ReadAllLines(path);
@@ -37,21 +44,46 @@ namespace VkApp.FileManager
 
         public void AddFriendsToFile(string userLogin, string gameName, List<string> friendRequests)
         {
-            string path = _fileBot + userLogin + "\\" + gameName + ".txt";
-            using (FileStream file = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite))
+            gameName = gameName.Remove(gameName.IndexOf(" "));
+            string path = _hiddenFolder + gameName;// + ".txt";
+
+            if (!Directory.Exists(path))
+            {
+                DirectoryInfo di = Directory.CreateDirectory(path);
+                di.Attributes = FileAttributes.Directory;
+            }
+
+            path = _hiddenFolder + gameName + @"\" + userLogin + ".txt";
+
+            #region COPYING_FROM_FILE
+            List<string> previousNames = new List<string>();
+            if (File.Exists(path))
+            {
+                var res = File.ReadAllLines(path);
+                foreach (string str in res) previousNames.Add(str);
+            }
+            foreach (var str in friendRequests) previousNames.Add(str);
+            #endregion
+            using (FileStream file = new FileStream(path, FileMode.OpenOrCreate))
             {
                 using (StreamWriter writer = new StreamWriter(file, Encoding.Default))
                 {
-                    writer.WriteLine(userLogin);
                     foreach (string str in friendRequests) { writer.WriteLine(str); }
                 }
             }
 
-            using (FileStream file = new FileStream(_filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite))
+            #region COPYING_FROM_FILE
+            if (File.Exists(_filePath))
+            {
+                var res = File.ReadAllLines(_filePath);
+                foreach (string str in res) previousNames.Add(str);
+            }
+            foreach (var str in friendRequests) previousNames.Add(str);
+            #endregion
+            using (FileStream file = new FileStream(_filePath, FileMode.OpenOrCreate))
             {
                 using (StreamWriter writer = new StreamWriter(file, Encoding.Default))
                 {
-                    writer.WriteLine(userLogin);
                     foreach (string str in friendRequests) { writer.WriteLine(str); }
                 }
             }
@@ -62,8 +94,7 @@ namespace VkApp.FileManager
         internal bool IsFriendExist(string text)
         {
             string friend = text;
-            friend = friend.Replace('\n', new char());
-            friend = friend.Replace('\r', ' ');
+            friend = friend.Replace("\r\n", " ");
 
             if (File.Exists(_filePath))
             {

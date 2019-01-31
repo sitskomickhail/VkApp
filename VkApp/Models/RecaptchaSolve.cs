@@ -105,11 +105,7 @@ namespace VkApp.Models
             }
             driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(15);
             List<string> tabs = new List<string>(driver.WindowHandles);
-            driver.SwitchTo().Window(tabs[2]);
-            //foreach (string item in tabs)
-            //{
-            //    MessageBox.Show(item);
-            //}
+            driver.SwitchTo().Window(tabs[tabs.Count - 1]);
             #region DOWNLOAD/GET_CODE
             DownloadRequest(driver.Url);
             GetCode(driver);
@@ -206,7 +202,7 @@ namespace VkApp.Models
             #endregion
 
             List<string> tabs = new List<string>(driver.WindowHandles);
-            driver.SwitchTo().Window(tabs[3]);
+            driver.SwitchTo().Window(tabs[tabs.Count - 1]);
 
             #region DOWNLOAD/GET_CODE
             DownloadRequest(driver.Url);

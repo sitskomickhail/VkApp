@@ -8,12 +8,11 @@ namespace VkApp.FileManager
     public class ProxyUsing
     {
         private const string _path = "Proxy.txt";
-        private int _curPos = 0;
         private List<Dictionary<string, object>> _proxy;
 
-        public Dictionary<string, object> Proxy
+        public List<Dictionary<string, object>> Proxy
         {
-            get { return _proxy[_curPos++]; }
+            get { return _proxy; }
         }
 
         public ProxyUsing()
