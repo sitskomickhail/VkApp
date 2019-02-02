@@ -10,12 +10,10 @@ namespace VkApp.FileManager
     {
         private const string _filePath = "Friends.txt";
         private string _hiddenFolder;
-        private List<string> _friendList;
 
         public FriendsClass()
         {
             _hiddenFolder = Environment.CurrentDirectory + @"\BotFriendsFolder\";
-            _friendList = new List<string>();
             if (!Directory.Exists(_hiddenFolder))
             {
                 DirectoryInfo di = Directory.CreateDirectory(_hiddenFolder);
@@ -23,29 +21,38 @@ namespace VkApp.FileManager
             }
         }
 
-        public List<string> GetAllFriendsFromFile(string userLogin, string gameName)
+        public List<string> GetAllFriendsFromFile(string userLogin, string checkedGame)
         {
-            string path = _hiddenFolder + userLogin + @"\" + gameName + ".txt";
+            List<string> friendList = new List<string>();
+            string[] temp = checkedGame.Split(' ');
+            string gameName = null;
+            for (int i = 0; i < temp.Count(); i++)
+            {
+                gameName += temp[i];
+            }
+            string path = _hiddenFolder + gameName + @"\" + userLogin + ".txt";
             if (File.Exists(path))
             {
-                string[] result = File.ReadAllLines(path);
-                int needPos = result.ToList<string>().IndexOf(userLogin);
-
-                while (result.ToList<string>()[needPos].IndexOf(" ") != 0)
+                string[] result = File.ReadAllLines(path, Encoding.Default);
+                for (int i = 0; i < result.Count(); i++)
                 {
-                    _friendList.Add(result[needPos]);
-                    needPos++;
+                    friendList.Add(result[i]);
                 }
-                return _friendList;
+                return friendList;
             }
             else
                 return null;
         }
 
-        public void AddFriendsToFile(string userLogin, string gameName, List<string> friendRequests)
+        public void AddFriendsToFile(string userLogin, string checkedGame, List<string> friendRequests)
         {
-            gameName = gameName.Remove(gameName.IndexOf(" "));
-            string path = _hiddenFolder + gameName;// + ".txt";
+            string[] temp = checkedGame.Split(' ');
+            string gameName = null;
+            for (int i = 0; i < temp.Count(); i++)
+            {
+                gameName += temp[i];
+            }
+            string path = _hiddenFolder + gameName;
 
             if (!Directory.Exists(path))
             {
@@ -59,7 +66,7 @@ namespace VkApp.FileManager
             List<string> previousNames = new List<string>();
             if (File.Exists(path))
             {
-                var res = File.ReadAllLines(path);
+                var res = File.ReadAllLines(path, Encoding.Default);
                 foreach (string str in res) previousNames.Add(str);
             }
             foreach (var str in friendRequests) previousNames.Add(str);
@@ -72,10 +79,11 @@ namespace VkApp.FileManager
                 }
             }
 
+            previousNames.Clear();
             #region COPYING_FROM_FILE
             if (File.Exists(_filePath))
             {
-                var res = File.ReadAllLines(_filePath);
+                var res = File.ReadAllLines(_filePath, Encoding.Default);
                 foreach (string str in res) previousNames.Add(str);
             }
             foreach (var str in friendRequests) previousNames.Add(str);
@@ -89,18 +97,13 @@ namespace VkApp.FileManager
             }
         }
 
-        public List<string> GetFriends { get { return _friendList; } }
-
         internal bool IsFriendExist(string text)
         {
-            string friend = text;
-            friend = friend.Replace("\r\n", " ");
-
             if (File.Exists(_filePath))
             {
-                string[] allFriends = File.ReadAllLines(_filePath);
+                string[] allFriends = File.ReadAllLines(_filePath, Encoding.Default);
                 for (int i = 0; i < allFriends.Count(); i++)
-                    if (allFriends[i] == friend)
+                    if (allFriends[i] == text)
                         return true;
             }
             return false;

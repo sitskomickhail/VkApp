@@ -12,51 +12,50 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="1*"/>
-            <RowDefinition Height="0.2*"/>
-            <RowDefinition Height="0.3*"/>
-            <RowDefinition Height="0.5*"/>
+            <RowDefinition Height="0.25*"/>
+            <RowDefinition Height="0.4*"/>
         </Grid.RowDefinitions>
         <Border BorderBrush="LightBlue" BorderThickness="2" Margin="5">
             <TextBox Grid.Row="0"
                      FontSize="13"
-                     Text="Test message..."
+                     Text="Введите ваше сообщение..."
                      BorderThickness="0"
-                     x:Name="tbMessage"/>
+                     x:Name="tbMessage"
+                     AcceptsReturn="True"/>
         </Border>
-        <DockPanel Grid.Row="1">
-            <Button HorizontalAlignment="Right" Content="Прикрепить файл" Margin="5, 1, 1, 1" Background="White" x:Name="btnDragNDrop"
-                    Click="btnDragNDrop_Click"/>
-            <Border BorderThickness="2" BorderBrush="LightBlue" Margin="5, 1, 5, 1">
-                <TextBlock Width="Auto" Text="Файл не выбран" Background="White" x:Name="pinPath"/>
-            </Border>
-        </DockPanel>
-        <StackPanel Grid.Row="2" Margin="5, 1, 5, 1">
-            <RadioButton Content="Запустить бота на добавление друзей" IsChecked="True" FontWeight="Bold" x:Name="rbtnAdd"/>
+        <StackPanel Grid.Row="1" Margin="5, 1, 5, 1">
+            <RadioButton Content="Запустить ботов на добавление друзей" IsChecked="True" FontWeight="Bold" x:Name="rbtnAdd"/>
             <RadioButton Content="Проверить наличие друзей и выполнить рассылку" FontWeight="Bold" x:Name="rbtnSend"/>
         </StackPanel>
-        <DockPanel Grid.Row="3">
+        <DockPanel Grid.Row="2">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1*"/>
                     <ColumnDefinition Width="1*"/>
                 </Grid.ColumnDefinitions>
-                <StackPanel Orientation="Horizontal">
-                    
-            <ComboBox Margin="5, 15, 5, 15"
-                      MinWidth="120"
-                      x:Name="cbGames"/>
-            <Button Content="+"
-                    Margin="0, 20, 0, 16"
-                    Padding="0, 0, 1, 0"
-                    MinWidth="15"
-                    Foreground="#FF345EB8"
-                    FontWeight="Bold"
-                    x:Name="btnAddFile"
-                    Click="btnAddFile_Click"/>
-                </StackPanel>
-                    <Button MinWidth="100" Margin="0, 15, 5, 15" Content="Start" x:Name="btnStart"
-                    Click="btnStart_Click" Grid.Column="1" MaxWidth="50" HorizontalAlignment="Right"/>
                 
+                <StackPanel Orientation="Horizontal">
+                    <ComboBox Margin="5, 15, 5, 10"
+                              MinWidth="120"
+                              x:Name="cbGames"/>
+                    <Button Content="+"
+                            Margin="0, 20, 0, 16"
+                            Padding="0, 0, 1, 0"
+                            MinWidth="15"
+                            Foreground="#FF345EB8"
+                            FontWeight="Bold"
+                            x:Name="btnAddFile"
+                            Click="btnAddFile_Click"/>
+                </StackPanel>
+                
+                <Button MinWidth="100" 
+                        Margin="0, 15, 5, 15" 
+                        Content="Start" 
+                        x:Name="btnStart"
+                        Click="btnStart_Click" 
+                        Grid.Column="1" 
+                        MaxWidth="50" 
+                        HorizontalAlignment="Right"/>
             </Grid>
         </DockPanel>
     </Grid>

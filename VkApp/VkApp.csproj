@@ -68,7 +68,6 @@
     <Compile Include="Models\RecaptchaSolve.cs" />
     <Compile Include="VKWorker\VkNavigate.cs" />
     <Compile Include="Randomer.cs" />
-    <Compile Include="VKWorker\ThreadWorker.cs" />
     <Page Include="VkWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
