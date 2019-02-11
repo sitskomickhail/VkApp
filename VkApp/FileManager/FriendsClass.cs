@@ -67,15 +67,15 @@ namespace VkApp.FileManager
             if (File.Exists(path))
             {
                 var res = File.ReadAllLines(path, Encoding.Default);
-                foreach (string str in res) previousNames.Add(str);
+                foreach (string str in res) if (!String.IsNullOrEmpty(str)) previousNames.Add(str);
             }
-            foreach (var str in friendRequests) previousNames.Add(str);
+            foreach (var str in friendRequests) if (!String.IsNullOrEmpty(str)) previousNames.Add(str);
             #endregion
             using (FileStream file = new FileStream(path, FileMode.OpenOrCreate))
             {
                 using (StreamWriter writer = new StreamWriter(file, Encoding.Default))
                 {
-                    foreach (string str in friendRequests) { writer.WriteLine(str); }
+                    foreach (string str in previousNames) { writer.WriteLine(str); }
                 }
             }
 
@@ -83,16 +83,16 @@ namespace VkApp.FileManager
             #region COPYING_FROM_FILE
             if (File.Exists(_filePath))
             {
-                var res = File.ReadAllLines(_filePath, Encoding.Default);
-                foreach (string str in res) previousNames.Add(str);
+                string[] res = File.ReadAllLines(_filePath, Encoding.Default);
+                foreach (string str in res) if (!String.IsNullOrEmpty(str)) previousNames.Add(str);
             }
-            foreach (var str in friendRequests) previousNames.Add(str);
+            foreach (var str in friendRequests) if (!String.IsNullOrEmpty(str)) previousNames.Add(str);
             #endregion
             using (FileStream file = new FileStream(_filePath, FileMode.OpenOrCreate))
             {
                 using (StreamWriter writer = new StreamWriter(file, Encoding.Default))
                 {
-                    foreach (string str in friendRequests) { writer.WriteLine(str); }
+                    foreach (string str in previousNames) { writer.WriteLine(str); }
                 }
             }
         }

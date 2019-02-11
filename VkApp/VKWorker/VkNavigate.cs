@@ -37,9 +37,16 @@ namespace VkApp.Models
         public void ReOption(Dictionary<string, object> proxy)
         {
             _options = new ChromeOptions();
-            _options.AddArgument("--headless");
+            //_options.AddArgument($"load-extension={Environment.CurrentDirectory}\\ProxyAutoAuth.crx");
+            _options.AddArgument("--disable-software-rasterizer");
+            _options.AddArgument("--disable-gpu\\" + Environment.CurrentDirectory);
             _options.AddArgument("--safebrowsing-disable-download-protection");
-            _options.AddExtension("ProxyAutoAuth.crx");
+            _options.AddArgument("ignore-certificate-errors");
+            //_options.AddArgument("--remote-debugging-port=9222");
+            _options.AddArgument("headless");
+            _options.AddArgument("start-maximized");
+            _options.AddArgument("disable-infobars");
+            _options.AddExtension(Environment.CurrentDirectory + "\\ProxyAutoAuth.crx");
             _options.ToCapabilities();
 
             Proxy prox = new Proxy();
@@ -56,7 +63,6 @@ namespace VkApp.Models
             if (_driver != null)
             {
                 _driver.Close();
-                _driver.Quit();
             }
         }
 
@@ -65,43 +71,51 @@ namespace VkApp.Models
             List<string> links = _links.GetLinks(choosedGame);
             if (links.Count == 0)
             {
-                MessageBox.Show("Ошибка! Не найдены ссылки на группы", "Error", MessageBoxButton.OK, MessageBoxImage.Error);       
-                return;                
+                MessageBox.Show("Ошибка! Не найдены ссылки на группы", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
             }
             ChromeDriverService service = ChromeDriverService.CreateDefaultService(Environment.CurrentDirectory);
-            service.HideCommandPromptWindow = true;
+            //service.HideCommandPromptWindow = true;
+            ChromeOptions opts = new ChromeOptions();
+            opts.AddArgument("--remote-debugging-port=9222");
+            opts.AddArgument("--disable-software-rasterizer");
+            opts.AddArgument("--disable-gpu");
+            opts.AddArgument("ignore-certificate-errors");
+            opts.AddArgument("--safebrowsing-disable-download-protection");
+            opts.AddArgument("headless");
 
-            _driver = new ChromeDriver(service);
-            _driver.Manage().Window.Maximize();
-            _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
+            ChromeDriver drv = new ChromeDriver(service, opts);
+            //drv.Manage().Window.Maximize();
+            drv.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
 
-            _driver.Navigate().GoToUrl("https://vk.com/login?to=aW0%2FYWN0PQ--&u=2");
+            drv.Navigate().GoToUrl("https://vk.com/login?to=aW0%2FYWN0PQ--&u=2");
             string[] logPass = _userClass.GetUsers[0].Split(':');
             #region LOGIN
-            _driver.FindElementByXPath("//*[@id=\"email\"]").SendKeys(logPass[0]);
-            _driver.FindElementByXPath("//*[@id=\"pass\"]").SendKeys(logPass[1]);
-            _driver.FindElementByXPath("//*[@id=\"login_button\"]").Click();
+            drv.FindElementByXPath("//*[@id=\"email\"]").SendKeys(logPass[0]);
+            drv.FindElementByXPath("//*[@id=\"pass\"]").SendKeys(logPass[1]);
+            drv.FindElementByXPath("//*[@id=\"login_button\"]").Click();
             #endregion
 
             foreach (var group in _links.GetLinks(choosedGame))
             {
                 List<IWebElement> elems = new List<IWebElement>();
                 Thread.Sleep(1500);
-                _driver.Navigate().GoToUrl(group);
+                drv.Navigate().GoToUrl(group);
                 Thread.Sleep(1000);
                 try
                 {
-                    _driver.FindElementByXPath("//*[@id=\"group_followers\"]/a/div/span[1]").Click();
+                    drv.FindElementByXPath("//*[@id=\"group_followers\"]/a/div/span[1]").Click();
                 }
                 catch
                 {
-                    _driver.FindElementByXPath("//*[@id=\"public_followers\"]/a/div/span[2]").Click();
+                    try { drv.FindElementByXPath("//*[@id=\"public_followers\"]/a/div/span[2]").Click(); }
+                    catch { continue; }
                 }
 
-                foreach (IWebElement item in _driver.FindElements(By.ClassName("fans_fan_lnk")))
+                foreach (IWebElement item in drv.FindElements(By.ClassName("fans_fan_lnk")))
                 {
                     elems.Add(item);
-                    if (elems.Count == 50)
+                    if (elems.Count == 100)
                         break;
                 }
 
@@ -116,11 +130,11 @@ namespace VkApp.Models
                     }
                 }
             }
-            _driver.Close();
-            _driver.Quit();
+            drv.Dispose();
+            drv.Quit();
         }
 
-        public void StartAdding(string choosedGame)
+        public void StartAdding(string choosedGame, string addMessage)
         {
             SecretStart(choosedGame);
             Thread.Sleep(2000);
@@ -128,7 +142,7 @@ namespace VkApp.Models
             List<string> links = _links.GetLinks(choosedGame);
 
             ChromeDriverService service = ChromeDriverService.CreateDefaultService(Environment.CurrentDirectory);
-            service.HideCommandPromptWindow = true;
+            //service.HideCommandPromptWindow = true;
 
             List<Dictionary<string, object>> proxy = _proxy.Proxy;
             decimal dictSwitch = _userClass.GetUsers.Count / _proxy.Count;
@@ -145,15 +159,14 @@ namespace VkApp.Models
                 {
                     if (tempDictUsing % dictSwitch == 0 && tempDictUsing != 0)
                         dictPos++;
-
-
+                    
                     Dictionary<string, object> curProxy = proxy[dictPos];
                     ReOption(curProxy);
                     string[] logPass = user.Split(':');
 
                     #region CRX_PROXY_INIT
-                    _driver = new ChromeDriver(service, _options);
-                    _driver.Manage().Window.Maximize();
+                     _driver = new ChromeDriver(service, _options);
+                    //_driver.Manage().Window.Maximize();
                     _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
 
                     try
@@ -192,7 +205,6 @@ namespace VkApp.Models
                         if (!_friendList.IsFriendExist(_savedNames[i]))
                         {
                             _driver.Navigate().GoToUrl(_friendLinks[i]);
-                            hrefsListed++;
                             try
                             {
                                 _driver.FindElementByXPath("//*[@id=\"friend_status\"]/div[1]/button").Click();
@@ -201,14 +213,15 @@ namespace VkApp.Models
                                 {
                                     break;
                                 }
+                                hrefsListed++;
                                 _driver.FindElementByClassName("page_actions_dd_label").Click();
                                 _driver.FindElementByXPath("//*[@id=\"page_actions_wrap\"]/div[2]/a[2]").Click();
-                                _driver.FindElementById("preq_input").SendKeys($"Привет. Добавляю для игры {choosedGame}");
+                                _driver.FindElementById("preq_input").SendKeys(addMessage);
                                 _driver.FindElementByClassName("flat_button").Click();
 
                                 localFriends.Add(_savedNames[i]);
                                 tempCount++;
-                                Thread.Sleep(Randomer.Next(120000, 180000));
+                                Thread.Sleep(Randomer.Next(120000 * 10 / _userClass.GetUsers.Count, 180000 * 10 / _userClass.GetUsers.Count));
                             }
                             catch { }
                             if (hrefsListed == _friendLinks.Count)
@@ -222,15 +235,17 @@ namespace VkApp.Models
                     _friendList.AddFriendsToFile(logPass[0], choosedGame, localFriends);
                     tempDictUsing++;
                     _options = null;
-                    _driver.Close();
-                    _driver.Quit(); //MAY BE TROUBLE...
+                    _driver.Dispose();
+                    //_driver.Quit();
                     if (!check)
                         break;
                 }
+                dictPos = 0;
+                tempDictUsing = 0;
             }
         }
 
-        public void CheckAndMail(string message, string choosedGame)
+        public void CheckAndMail(string choosedGame, string message)
         {
             string[] temps = choosedGame.Split(' ');
             string gameNames = null;
