@@ -66,10 +66,10 @@ namespace VkApp.FileManager
             List<string> previousNames = new List<string>();
             if (File.Exists(path))
             {
-                var res = File.ReadAllLines(path, Encoding.Default);
+                string[] res = File.ReadAllLines(path, Encoding.Default);
                 foreach (string str in res) if (!String.IsNullOrEmpty(str)) previousNames.Add(str);
             }
-            foreach (var str in friendRequests) if (!String.IsNullOrEmpty(str)) previousNames.Add(str);
+            foreach (string str in friendRequests) if (!String.IsNullOrEmpty(str)) previousNames.Add(str);
             #endregion
             using (FileStream file = new FileStream(path, FileMode.OpenOrCreate))
             {
@@ -86,7 +86,7 @@ namespace VkApp.FileManager
                 string[] res = File.ReadAllLines(_filePath, Encoding.Default);
                 foreach (string str in res) if (!String.IsNullOrEmpty(str)) previousNames.Add(str);
             }
-            foreach (var str in friendRequests) if (!String.IsNullOrEmpty(str)) previousNames.Add(str);
+            foreach (string str in friendRequests) if (!String.IsNullOrEmpty(str)) previousNames.Add(str);
             #endregion
             using (FileStream file = new FileStream(_filePath, FileMode.OpenOrCreate))
             {

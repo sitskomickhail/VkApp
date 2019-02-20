@@ -1,189 +1,153 @@
 ﻿using System;
 using System.Collections.Generic;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Firefox;
 using System.Threading;
 using VkApp.FileManager;
 using System.IO;
 using System.Windows;
+using System.Text;
+using VkNet.Model;
+using VkNet;
+using VkNet.Model.RequestParams;
+using VkNet.Enums.Filters;
+using VkNet.Utils;
+using static LogInfo.LogIO;
+using LogInfo;
 
 namespace VkApp.Models
 {
     class VkNavigate
     {
-        private ChromeDriver _driver;
-        private ChromeOptions _options;
-        private GroupLinks _links;
+        private FirefoxDriver _driver;
+        private FirefoxOptions _options;
         private FriendsClass _friendList;
         private Users _userClass;
-        private ProxyUsing _proxy;
+        private Logging _logger = new Logging(WriteLog);
+        private MainWindow _tbLog = System.Windows.Application.Current.Windows[0] as MainWindow;
+
 
         private List<string> _friendLinks;
         List<string> _savedNames;
 
         public VkNavigate()
         {
-            _options = new ChromeOptions();
-
-            _links = new GroupLinks();
+            _options = new FirefoxOptions();
             _friendList = new FriendsClass();
             _userClass = new Users();
-            _proxy = new ProxyUsing();
-
             _friendLinks = new List<string>();
             _savedNames = new List<string>();
-        }
 
-        public void ReOption(Dictionary<string, object> proxy)
-        {
-            _options = new ChromeOptions();
-            //_options.AddArgument($"load-extension={Environment.CurrentDirectory}\\ProxyAutoAuth.crx");
-            _options.AddArgument("--disable-software-rasterizer");
-            _options.AddArgument("--disable-gpu\\" + Environment.CurrentDirectory);
-            _options.AddArgument("--safebrowsing-disable-download-protection");
-            _options.AddArgument("ignore-certificate-errors");
-            //_options.AddArgument("--remote-debugging-port=9222");
-            _options.AddArgument("headless");
-            _options.AddArgument("start-maximized");
-            _options.AddArgument("disable-infobars");
-            _options.AddExtension(Environment.CurrentDirectory + "\\ProxyAutoAuth.crx");
-            _options.ToCapabilities();
-
-            Proxy prox = new Proxy();
-            prox.IsAutoDetect = false;
-            prox.Kind = ProxyKind.Manual;
-            prox.HttpProxy = prox.SslProxy = $"{proxy["ip"]}:{proxy["port"]}";
-            prox.SocksUserName = proxy["login"].ToString();
-            prox.SocksPassword = proxy["password"].ToString();
-            _options.Proxy = prox;
+            _logger += _tbLog.ShowLog;
         }
 
         internal void CloseDrivers()
         {
             if (_driver != null)
             {
-                _driver.Close();
+                _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(0);
+                _driver.Quit();
+                //_driver.Dispose();
             }
         }
 
-        private void SecretStart(string choosedGame)
+        private void GetGroups(string choosedGame)
         {
-            List<string> links = _links.GetLinks(choosedGame);
-            if (links.Count == 0)
+            string strGame;
+            if (choosedGame == "Metro 2033")
+                strGame = "Метро 2033";
+            else
+                strGame = "Легенда о вампире";
+
+            List<string> linksIds = new List<string>();
+
+            VkApi api = new VkApi();
+            _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "GetGroups", LogMessage = "Подключение прокси...", UserName = String.Empty });
+            api.Authorize(new ApiAuthParams
             {
-                MessageBox.Show("Ошибка! Не найдены ссылки на группы", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-            ChromeDriverService service = ChromeDriverService.CreateDefaultService(Environment.CurrentDirectory);
-            //service.HideCommandPromptWindow = true;
-            ChromeOptions opts = new ChromeOptions();
-            opts.AddArgument("--remote-debugging-port=9222");
-            opts.AddArgument("--disable-software-rasterizer");
-            opts.AddArgument("--disable-gpu");
-            opts.AddArgument("ignore-certificate-errors");
-            opts.AddArgument("--safebrowsing-disable-download-protection");
-            opts.AddArgument("headless");
+                ApplicationId = 6866405,
+                Login = "375336732616",
+                Password = "хорошенькая19",
+                Settings = Settings.Offline,
+                Host = "5.188.75.148",
+                Port = 5285,
+                ProxyLogin = "user2775",
+                ProxyPassword = "9dq7rz"
+            });
+            _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "GG", LogMessage = "Прокси подключено!", UserName = String.Empty });
 
-            ChromeDriver drv = new ChromeDriver(service, opts);
-            //drv.Manage().Window.Maximize();
-            drv.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
+            var grs = api.Groups.Search(new GroupsSearchParams() { Query = $"{strGame}", Count = Randomer.Next(17, 21), Sort = GroupSort.Growth });
+            _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "GG", LogMessage = $"Найдено групп по игре {strGame}: {grs.Count}", UserName = String.Empty });
 
-            drv.Navigate().GoToUrl("https://vk.com/login?to=aW0%2FYWN0PQ--&u=2");
-            string[] logPass = _userClass.GetUsers[0].Split(':');
-            #region LOGIN
-            drv.FindElementByXPath("//*[@id=\"email\"]").SendKeys(logPass[0]);
-            drv.FindElementByXPath("//*[@id=\"pass\"]").SendKeys(logPass[1]);
-            drv.FindElementByXPath("//*[@id=\"login_button\"]").Click();
-            #endregion
-
-            foreach (var group in _links.GetLinks(choosedGame))
+            _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "GG", LogMessage = $"Сбор аккаунтов...", UserName = String.Empty });
+            foreach (var group in grs)
             {
-                List<IWebElement> elems = new List<IWebElement>();
-                Thread.Sleep(1500);
-                drv.Navigate().GoToUrl(group);
-                Thread.Sleep(1000);
+                VkCollection<User> uss = new VkCollection<User>(1000, new List<User>());
                 try
                 {
-                    drv.FindElementByXPath("//*[@id=\"group_followers\"]/a/div/span[1]").Click();
+                    uss = api.Groups.GetMembers(new GroupsGetMembersParams() { Count = Randomer.Next(950, 1000), GroupId = group.Id.ToString(), Fields = UsersFields.All });
                 }
                 catch
                 {
-                    try { drv.FindElementByXPath("//*[@id=\"public_followers\"]/a/div/span[2]").Click(); }
-                    catch { continue; }
+                    _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "GG", LogMessage = $"Ошибка при сборе информации о группе: {group.Name}, {group.Id}", UserName = String.Empty });
+                    continue;
                 }
-
-                foreach (IWebElement item in drv.FindElements(By.ClassName("fans_fan_lnk")))
+                foreach (User user in uss)
                 {
-                    elems.Add(item);
-                    if (elems.Count == 100)
-                        break;
-                }
-
-                foreach (IWebElement link in elems)
-                {
-                    if (!_friendList.IsFriendExist(link.Text))
+                    if (user.FirstName != "DELETED")
                     {
-                        _friendLinks.Add(link.GetAttribute("href"));
-                        string friend = link.Text;
-                        friend = friend.Replace("\r\n", " ");
-                        _savedNames.Add(friend);
+                        linksIds.Add("https://vk.com/" + user.Domain);
+                        _savedNames.Add(user.FirstName + " " + user.LastName);
                     }
                 }
             }
-            drv.Dispose();
-            drv.Quit();
+            _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "GG", LogMessage = $"Всего собрано: {linksIds.Count} аккаунтов", UserName = String.Empty });
+
+            for (int i = 0; i < 500; i++)
+                _friendLinks.Add(linksIds[Randomer.Next(0, linksIds.Count)]);
+            _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "GG", LogMessage = $"Выбрано 500 случайных аккаунтов", UserName = String.Empty });
         }
 
-        public void StartAdding(string choosedGame, string addMessage)
+        public bool StartAdding(string choosedGame, string addMessage)
         {
-            SecretStart(choosedGame);
-            Thread.Sleep(2000);
+            GetGroups(choosedGame);
 
-            List<string> links = _links.GetLinks(choosedGame);
+            _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "AF", LogMessage = "Инициализация...", UserName = String.Empty });
 
-            ChromeDriverService service = ChromeDriverService.CreateDefaultService(Environment.CurrentDirectory);
-            //service.HideCommandPromptWindow = true;
+            FirefoxDriverService service = FirefoxDriverService.CreateDefaultService(Environment.CurrentDirectory);
+            service.HideCommandPromptWindow = true;
 
-            List<Dictionary<string, object>> proxy = _proxy.Proxy;
-            decimal dictSwitch = _userClass.GetUsers.Count / _proxy.Count;
+            decimal dictSwitch = _userClass.GetUsers.Count / 10; // 10 - количество firefox профилей
             dictSwitch = Math.Floor(dictSwitch);
 
             int dictPos = 0;
             int tempCount = 0;
             int tempDictUsing = 0;
             int hrefsListed = 0;
-
+            bool checkWhile = true;
+            DateTime date = new DateTime();
             while (tempCount < 200 && hrefsListed < _friendLinks.Count)
             {
                 foreach (var user in _userClass.GetUsers)
                 {
                     if (tempDictUsing % dictSwitch == 0 && tempDictUsing != 0)
                         dictPos++;
-                    
-                    Dictionary<string, object> curProxy = proxy[dictPos];
-                    ReOption(curProxy);
+
+                    FirefoxProfile profile = new FirefoxProfile(Environment.CurrentDirectory + $@"\Fires\fireuser{dictPos}");
+                    _options = new FirefoxOptions();
+                    _options.Profile = profile;
+                    _options.AddArgument("--headless");
                     string[] logPass = user.Split(':');
 
-                    #region CRX_PROXY_INIT
-                     _driver = new ChromeDriver(service, _options);
-                    //_driver.Manage().Window.Maximize();
-                    _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
+                    _driver = new FirefoxDriver(service, _options);
+                    _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "AF", LogMessage = "Открытие драйвера", UserName = logPass[0] });
 
+                    _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
                     try
                     {
-                        _driver.FindElementById("login").SendKeys(curProxy["login"].ToString());
-                        _driver.FindElementById("password").SendKeys(curProxy["password"].ToString());
-                        _driver.FindElementById("save").Click();
-                        Thread.Sleep(100);
+                        _driver.Navigate().GoToUrl("https://vk.com/login?to=aW0%2FYWN0PQ--&u=2");
                     }
-                    catch
-                    {
-                        _options = null;
-                        _driver.Close();
-                        continue;
-                    }
-                    #endregion
-
+                    catch { }
                     _driver.Navigate().GoToUrl("https://vk.com/login?to=aW0%2FYWN0PQ--&u=2");
 
                     #region LOGIN
@@ -191,20 +155,32 @@ namespace VkApp.Models
                     _driver.FindElementByXPath("//*[@id=\"pass\"]").SendKeys(logPass[1]);
                     _driver.FindElementByXPath("//*[@id=\"login_button\"]").Click();
                     #endregion
+
+
                     if (IsRecaptchaExist())
                     {
                         tempDictUsing++;
+                        _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "AF", LogMessage = "Ошибка! Найдена рекапча... Идет решение проблемы...", UserName = logPass[0] });
+                        Thread.Sleep(40000);
                         continue;
                     }
-
+                    _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "AF", LogMessage = "Пользователь успешно залогинен", UserName = logPass[0] });
                     #region ADD_FRIEND
                     List<string> localFriends = new List<string>();
                     bool check = true;
+                    _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "AF", LogMessage = "Добавление друзей...", UserName = logPass[0] });
+                    if (DateTime.Now.Hour - date.Hour == 1)
+                    {
+                        _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "AF", LogMessage = $"Добавлено друзей: {tempCount} за время работы", UserName = String.Empty });
+                        date = DateTime.Now;
+                    }
+
+
                     for (int i = hrefsListed; i < _friendLinks.Count; i++)
                     {
                         if (!_friendList.IsFriendExist(_savedNames[i]))
                         {
-                            _driver.Navigate().GoToUrl(_friendLinks[i]);
+                            _driver.Navigate().GoToUrl(_friendLinks[i]); //second user no enabling
                             try
                             {
                                 _driver.FindElementByXPath("//*[@id=\"friend_status\"]/div[1]/button").Click();
@@ -230,23 +206,41 @@ namespace VkApp.Models
                                 break;
                             }
                         }
+                        else
+                            hrefsListed++;
+                    }
+                    if (localFriends.Count == 0)
+                    {
+                        _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "AF", LogMessage = "Нет друзей для добавления. Просьба обратиться к программисту за помощью...", UserName = String.Empty });
+                        check = false;
                     }
                     #endregion
-                    _friendList.AddFriendsToFile(logPass[0], choosedGame, localFriends);
+                    if (localFriends.Count > 0)
+                        _friendList.AddFriendsToFile(logPass[0], choosedGame, localFriends);
                     tempDictUsing++;
                     _options = null;
                     _driver.Dispose();
-                    //_driver.Quit();
+                    _driver.Quit();
                     if (!check)
+                    {
+                        checkWhile = false;
                         break;
+                    }
                 }
+                if (!checkWhile)
+                    break;
                 dictPos = 0;
                 tempDictUsing = 0;
             }
+            _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "AF", LogMessage = $"Заявки успешно отосланы! Общее количество разосланных заявок: {tempCount}", UserName = String.Empty });
+            return true;
         }
 
-        public void CheckAndMail(string choosedGame, string message)
+        public bool CheckAndMail(string choosedGame, string message)
         {
+            _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "SM", LogMessage = "Инициализация рассылки", UserName = String.Empty });
+
+            message = message.Replace("\r", String.Empty);
             string[] temps = choosedGame.Split(' ');
             string gameNames = null;
             for (int i = 0; i < temps.Length; i++)
@@ -254,19 +248,19 @@ namespace VkApp.Models
                 gameNames += temps[i];
             }
             string pathCheck = Environment.CurrentDirectory + @"\BotFriendsFolder\" + gameNames;
-            if (!File.Exists(pathCheck))
+            if (!Directory.Exists(pathCheck))
             {
-                MessageBox.Show("Ошибка! Нет информации о друзьях для данной игры", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
+                MessageBox.Show("Ошибка! Нет информации о друзьях для данной игры\nВозможно не существует необходимых файлов", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "SM", LogMessage = "Не найденно данных о добавленных друзьях", UserName = String.Empty });
+                return false;
             }
 
 
-            ChromeDriverService service = ChromeDriverService.CreateDefaultService(Environment.CurrentDirectory);
+            FirefoxDriverService service = FirefoxDriverService.CreateDefaultService(Environment.CurrentDirectory);
             service.HideCommandPromptWindow = true;
 
 
-            List<Dictionary<string, object>> proxy = _proxy.Proxy;
-            decimal dictSwitch = _userClass.GetUsers.Count / _proxy.Count;
+            decimal dictSwitch = _userClass.GetUsers.Count / 10; // 10 - количество firefox профилей
             dictSwitch = Math.Floor(dictSwitch);
 
             int dictPos = 0;
@@ -279,27 +273,31 @@ namespace VkApp.Models
                 if (tempDictUsing % dictSwitch == 0 && tempDictUsing != 0)
                     dictPos++;
 
-                Dictionary<string, object> curProxy = proxy[dictPos];
-                ReOption(curProxy);
+                FirefoxProfile profile = new FirefoxProfile(Environment.CurrentDirectory + $@"\Fires\fireuser{dictPos}");
+                _options = new FirefoxOptions();
+                _options.Profile = profile;
+                _options.AddArgument("--headless");
 
-                #region CRX_PROXY_INIT
-                _driver = new ChromeDriver(service, _options);
-                _driver.Manage().Window.Maximize();
-                _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
+                _driver = new FirefoxDriver(service, _options);
 
-                _driver.FindElementById("login").SendKeys(curProxy["login"].ToString());
-                _driver.FindElementById("password").SendKeys(curProxy["password"].ToString());
-                _driver.FindElementById("save").Click();
-                Thread.Sleep(100);
-                #endregion
+                try { _driver.Navigate().GoToUrl("https://vk.com/login?to=aW0%2FYWN0PQ--&u=2"); }
+                catch { _driver.Navigate().GoToUrl("https://vk.com/login?to=aW0%2FYWN0PQ--&u=2"); }
 
-                _driver.Navigate().GoToUrl("https://vk.com/login?to=aW0%2FYWN0PQ--&u=2");
 
                 #region LOGIN
+                _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "SM", LogMessage = "Логин пользователя", UserName = logPass[0] });
                 _driver.FindElementByXPath("//*[@id=\"email\"]").SendKeys(logPass[0]);
                 _driver.FindElementByXPath("//*[@id=\"pass\"]").SendKeys(logPass[1]);
                 _driver.FindElementByXPath("//*[@id=\"login_button\"]").Click();
-                IsRecaptchaExist();
+
+                if (IsRecaptchaExist())
+                {
+                    _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "SM", LogMessage = "Логин пользователя", UserName = logPass[0] });
+                    MessageBox.Show("Ошибка в работе программы. Перезапустите приложение в ближайшее время", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    _driver.Close();
+                    _driver.Quit();
+                    return false;
+                }
                 #endregion
 
                 _driver.Navigate().GoToUrl("https://vk.com/im?act=create");
@@ -318,28 +316,40 @@ namespace VkApp.Models
                 string path = Environment.CurrentDirectory + @"\BotFriendsFolder\" + gameName + @"\" + logPass[0] + ".txt";
                 #endregion
 
+                int addFriends = 0;
+                _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "SM", LogMessage = "Сбор пользователей для рассылки", UserName = logPass[0] });
                 if (File.Exists(path))
                     foreach (string friend in _friendList.GetAllFriendsFromFile(logPass[0], choosedGame))
                     {
                         friendTextBox.Clear();
                         friendTextBox.SendKeys(friend);
-                        try { _driver.FindElementByXPath("//*[@id=\"content\"]/div/div[1]/div[1]/div/div[3]/div/div/div/div[1]/div[1]/div").Click(); check = true; } catch { }
+                        try { _driver.FindElementByXPath("//*[@id=\"content\"]/div/div[1]/div[1]/div/div[3]/div/div/div/div[1]/div[1]/div").Click(); addFriends++; check = true; } catch { }
                         Thread.Sleep(1000);
                     }
+
                 #endregion
                 if (check)
                 {
                     #region SENDMESSAGE
                     _driver.FindElementByXPath("//*[@id=\"content\"]/div/div[1]/div[1]/div/div[4]/div/button").Click();
+                    _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "SM", LogMessage = $"Пользователи добавлены ({addFriends}), чат создан", UserName = logPass[0] });
                     _driver.FindElementByXPath("//*[@id=\"im_editable0\"]").SendKeys(message);
 
                     _driver.FindElementByXPath("//*[@id=\"content\"]/div/div[1]/div[3]/div[2]/div[4]/div[3]/div[4]/div[1]/button").Click();
                     Thread.Sleep(2000);
+                    _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "SM", LogMessage = "Сообщения разосланы!", UserName = logPass[0] });
                     #endregion
                 }
+                else
+                {
+                    _logger.Invoke(LogIO.path, new Log { Date = DateTime.Now, Method = "SM", LogMessage = "Нет добавленных пользователей", UserName = logPass[0] });
+                }
+                tempDictUsing++;
                 _driver.Close();
                 _driver.Quit();
             }
+            Directory.Delete(pathCheck);
+            return true;
         }
 
         private bool IsRecaptchaExist()
