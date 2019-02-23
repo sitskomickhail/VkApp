@@ -88,8 +88,8 @@
     <Compile Include="FileManager\GroupLinks.cs" />
     <Compile Include="FileManager\ProxyUsing.cs" />
     <Compile Include="FileManager\Users.cs" />
-    <Compile Include="Models\DriverWaitExtensions.cs" />
-    <Compile Include="Models\RecaptchaSolve.cs" />
+    <Compile Include="VKWorker\Metro33Links.cs" />
+    <Compile Include="VKWorker\VampLegendLinks.cs" />
     <Compile Include="VKWorker\VkNavigate.cs" />
     <Compile Include="Randomer.cs" />
     <Page Include="VkWindow.xaml">
